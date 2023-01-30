@@ -1,0 +1,17 @@
+@startuml
+
+title Agents - Use Case Diagram
+
+actor : Attacker : as A
+actor : Defender : as D
+actor : Judge System : as J
+
+A -> (utter sentence s)
+D -> (utter sentence s)
+J -> (assign word w)
+J -down-> (check fleuncy)
+J -up-> (check adequacy)
+J -left-> (check syntactic correctness)
+J -> (check relevancy in context)
+
+@enduml
