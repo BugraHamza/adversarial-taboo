@@ -1,2 +1,8 @@
-/saved-models/
-/datasets/
+.idea/
+.ipynb_checkpoints/
+
+# parquet data
+*.parquet
+
+# file which end with a number
+*.[0-9]*
