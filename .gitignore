@@ -1,8 +1,9 @@
 .idea/
 .ipynb_checkpoints/
 
-# tr_wiki.parquet is a large file
-tr_wiki.parquet
+# parquet and csv files
+*.parquet
+*.csv
 
 # file which end with a number
 *.[0-9]*
