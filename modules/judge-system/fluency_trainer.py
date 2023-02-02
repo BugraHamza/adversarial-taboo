@@ -49,12 +49,12 @@ def evaluate(model, val_loader):
 def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
     # load data
     if data_name == 'reddit':
-        train_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_train.parquet')
-        val_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_val.parquet')
+        train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
+        val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
         # test_data = pd.read_parquet('../../datasets/reddit-dataset/te-reddit.parquet')
     elif data_name == 'forum_dh':
-        train_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_train.parquet')
-        val_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_val.parquet')
+        train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
+        val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_val.parquet')
         # test_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_test.parquet')
     else:
         raise ValueError('Invalid data name!')
@@ -87,7 +87,7 @@ def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
 
 
 def objective(trial):
-    data_name = 'forum_dh'
+    data_name = 'reddit'
     model_name = 'redrussianarmy/gpt2-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
     num_epochs = 1
