@@ -93,7 +93,7 @@ def objective(trial):
     model_name = 'redrussianarmy/gpt2-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
     num_epochs = 1
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     return main(data_name, model_name, batch_size, num_epochs, device)
 
