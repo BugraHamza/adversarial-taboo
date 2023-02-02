@@ -1,8 +1,6 @@
-import random
 import sys
 
 from JudgeSystem.judge_system import JudgeSystem
-from custom_models import ClassifyBERTurk
 from OpenAttacker.attacker import Attacker
 from OpenDefender.defender import Defender
 
@@ -203,8 +201,8 @@ class Game:
 
 
 if __name__ == '__main__':
-    judge = JudgeSystem(fluency_path="JudgeSystem/fluency_model_19.7776380211726",
-                        relevancy_path="JudgeSystem/adequacy_model_0.5374999642372131",
+    judge = JudgeSystem(fluency_path="judge-system/fluency_model_19.7776380211726",
+                        relevancy_path="judge-system/adequacy_model_0.5374999642372131",
                         fluency_threshold=60e3, relevancy_threshold=0.4)
 
     # ['direct_inquiry', 'indirect_inducement', 'user']
