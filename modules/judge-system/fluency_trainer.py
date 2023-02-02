@@ -98,5 +98,6 @@ def objective(trial):
 
 if __name__ == '__main__':
     study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
+                                load_if_exists=True,
                                 pruner=optuna.pruners.SuccessiveHalvingPruner())
     study.optimize(objective, n_trials=50, gc_after_trial=True)
