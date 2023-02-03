@@ -12,11 +12,14 @@ import torch.optim as optim
 
 from tqdm import tqdm
 
-from transformers import get_linear_schedule_with_warmup
+from transformers import get_linear_schedule_with_warmup, set_seed
 
 from modules.utils.util import get_gpt_tokenizer
 from modules.utils.custom_datasets import FluencyDataset
 from modules.utils.custom_models import get_fluency_model
+
+
+set_seed(42)
 
 
 def train(model, train_loader, optimizer, scheduler):

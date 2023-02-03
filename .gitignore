@@ -1,8 +1,13 @@
+# folders
 .idea/
 .ipynb_checkpoints/
+/Report/
 
 # parquet and csv files
 *.csv
 
 # file which end with a number
 *.[0-9]*
+
+# database files
+*.db
