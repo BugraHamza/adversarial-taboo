@@ -1,3 +1,5 @@
+import argparse
+
 import optuna as optuna
 import pandas as pd
 import numpy as np
@@ -46,7 +48,7 @@ def evaluate(model, val_loader):
     return np.mean(losses)
 
 
-def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
+def main(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
     # load data
     if data_name == 'reddit':
         train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
@@ -73,11 +75,11 @@ def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
     fluency_model = get_fluency_model(model_name, tokenizer_length=len(tokenizer), device=device)
 
     # create an optimizer
-    optimizer = optim.AdamW(fluency_model.parameters(), lr=0.01)
+    optimizer = optim.AdamW(fluency_model.parameters(), lr=learning_rate)
 
     # create a learning rate scheduler
     num_training_steps = len(train_loader) * num_epochs
-    num_warmup_steps = 0
+    num_warmup_steps = num_training_steps // 10
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps)
 
     train(fluency_model, train_loader, optimizer, scheduler)
@@ -86,17 +88,21 @@ def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
     return val_loss
 
 
-def objective(trial):
-    data_name = 'forum_dh'
+def objective(trial, data_name, device):
+    data_name = data_name
     model_name = 'redrussianarmy/gpt2-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
+    learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
     num_epochs = 1
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    return main(data_name, model_name, batch_size, num_epochs, device)
+    return main(data_name, model_name, batch_size, learning_rate, num_epochs, device)
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_name', type=str, default='reddit')
+    parser.add_argument('--device', type=str, default='cpu')
+
     study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
                                 load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
     study.optimize(objective, n_trials=50, gc_after_trial=True)
