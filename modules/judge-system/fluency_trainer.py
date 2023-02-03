@@ -49,11 +49,11 @@ def evaluate(model, val_loader):
     return np.mean(losses)
 
 
-def main(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
+def train_vsl_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
     # load data
     if data_name == 'reddit':
-        train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
-        val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
+        train_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_train.parquet')
+        val_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_val.parquet')
         # test_data = pd.read_parquet('../../datasets/reddit-dataset/te-reddit.parquet')
     elif data_name == 'forum_dh':
         train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
@@ -96,16 +96,34 @@ def objective(trial, data_name, device):
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
     num_epochs = 1
 
-    return main(data_name, model_name, batch_size, learning_rate, num_epochs, device)
+    return train_vsl_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device)
+
+
+def main(data_name, num_trials, device):
+    study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
+                                load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
+    study.optimize(lambda x: objective(x, data_name, device), n_trials=num_trials, gc_after_trial=True)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str, default='reddit')
     parser.add_argument('--device', type=str, default='cpu')
+    parser.add_argument('--num_trials', type=int, default=50)
 
     args = parser.parse_args()
 
-    study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
-                                load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
-    study.optimize(lambda x: objective(x, args.data_name, args.device), n_trials=50, gc_after_trial=True)
+    if args.device == 'cpu' or args.device == 'cuda':
+        main(args.data_name, args.num_trials, args.device)
+    elif args.device == 'double_cuda':
+        p1 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:0'))
+        p2 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:1'))
+
+        p1.start()
+        p2.start()
+
+        p1.join()
+        p2.join()
+
+    else:
+        raise ValueError('Invalid device name! (cpu, cuda, double_cuda). You are probably using a TPU.')
