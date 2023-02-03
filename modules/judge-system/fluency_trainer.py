@@ -1,5 +1,4 @@
 import argparse
-from functools import partial
 from multiprocessing import Process
 
 import optuna as optuna
@@ -25,7 +24,7 @@ set_seed(42)
 def train(model, train_loader, optimizer, scheduler):
     model.train()
     pbar = tqdm(train_loader)
-    losses = []
+    ppls = []
 
     for batch in pbar:
         optimizer.zero_grad()
@@ -34,23 +33,23 @@ def train(model, train_loader, optimizer, scheduler):
         optimizer.step()
         scheduler.step()
 
-        losses.append(loss.item())
-        pbar.set_description(f'Loss: {np.mean(losses):.5f}')
+        ppls.append(np.exp(loss.item()))
+        pbar.set_description(f'PPL: {np.mean(ppls):.5f}')
 
-    return losses
+    return np.mean(ppls)
 
 
 def evaluate(model, val_loader):
     model.eval()
     pbar = tqdm(val_loader)
-    losses = []
+    ppls = []
     with torch.no_grad():
         for batch in pbar:
             loss = model(**batch, labels=batch['input_ids']).loss
-            losses.append(loss.item())
-            pbar.set_description(f'Loss: {np.mean(losses):.5f}')
+            ppls.append(np.exp(loss.item()))
+            pbar.set_description(f'PPL: {np.mean(ppls):.5f}')
 
-    return losses
+    return np.mean(ppls)
 
 
 def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
@@ -88,9 +87,9 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps)
 
     train(fluency_model, train_loader, optimizer, scheduler)
-    val_losses = evaluate(fluency_model, val_loader)
+    val_ppl = evaluate(fluency_model, val_loader)
 
-    return torch.exp(torch.tensor(val_losses)).mean()
+    return val_ppl
 
 
 def objective(trial, data_name, device):
