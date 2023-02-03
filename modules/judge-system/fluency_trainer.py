@@ -33,8 +33,8 @@ def train(model, train_loader, optimizer, scheduler):
 
         losses.append(loss.item())
         pbar.set_description(f'Loss: {np.mean(losses):.5f}')
-
-    return np.mean(losses)
+        break
+    return losses
 
 
 def evaluate(model, val_loader):
@@ -47,7 +47,7 @@ def evaluate(model, val_loader):
             losses.append(loss.item())
             pbar.set_description(f'Loss: {np.mean(losses):.5f}')
 
-    return np.mean(losses)
+    return losses
 
 
 def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
@@ -55,11 +55,11 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     if data_name == 'reddit':
         train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
         val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
-        # test_data = pd.read_parquet('../../datasets/reddit-dataset/te-reddit.parquet')
+        # test_data = pd.read_parquet('datasets/reddit-dataset/te-reddit.parquet')
     elif data_name == 'forum_dh':
         train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
         val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_val.parquet')
-        # test_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_test.parquet')
+        # test_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_test.parquet')
     else:
         raise ValueError('Invalid data name!')
 
@@ -85,16 +85,16 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps)
 
     train(fluency_model, train_loader, optimizer, scheduler)
-    val_loss = evaluate(fluency_model, val_loader)
+    val_losses = evaluate(fluency_model, val_loader)
 
-    return val_loss
+    return torch.exp(torch.tensor(val_losses)).mean()
 
 
 def objective(trial, data_name, device):
     data_name = data_name
     model_name = 'redrussianarmy/gpt2-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 16)
-    learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
+    learning_rate = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
     num_epochs = 1
 
     return train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device)
@@ -116,6 +116,7 @@ if __name__ == '__main__':
 
     if args.device == 'cpu' or args.device == 'cuda':
         main(args.data_name, args.num_trials, args.device)
+
     elif args.device == 'double_cuda':
         p1 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:0'))
         p2 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:1'))
