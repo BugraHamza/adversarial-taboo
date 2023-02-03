@@ -49,12 +49,12 @@ def evaluate(model, val_loader):
 def main(data_name, model_name, batch_size, num_epochs, device='cpu'):
     # load data
     if data_name == 'reddit':
-        train_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_train.parquet')
-        val_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_val.parquet')
+        train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
+        val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
         # test_data = pd.read_parquet('../../datasets/reddit-dataset/te-reddit.parquet')
     elif data_name == 'forum_dh':
-        train_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_train.parquet')
-        val_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_val.parquet')
+        train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
+        val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_val.parquet')
         # test_data = pd.read_parquet('../../datasets/donanim-haber-dataset/forum_dh_test.parquet')
     else:
         raise ValueError('Invalid data name!')
@@ -91,12 +91,12 @@ def objective(trial):
     model_name = 'redrussianarmy/gpt2-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
     num_epochs = 1
-    device = 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     return main(data_name, model_name, batch_size, num_epochs, device)
 
 
 if __name__ == '__main__':
     study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
-                                pruner=optuna.pruners.SuccessiveHalvingPruner())
+                                load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
     study.optimize(objective, n_trials=50, gc_after_trial=True)
