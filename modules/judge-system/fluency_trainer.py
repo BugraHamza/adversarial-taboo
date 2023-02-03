@@ -50,11 +50,11 @@ def evaluate(model, val_loader):
     return np.mean(losses)
 
 
-def train_vsl_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
+def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
     # load data
     if data_name == 'reddit':
-        train_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_train.parquet')
-        val_data = pd.read_parquet('../../datasets/reddit-dataset/tr-reddit_val.parquet')
+        train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
+        val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
         # test_data = pd.read_parquet('../../datasets/reddit-dataset/te-reddit.parquet')
     elif data_name == 'forum_dh':
         train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
@@ -93,11 +93,11 @@ def train_vsl_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
 def objective(trial, data_name, device):
     data_name = data_name
     model_name = 'redrussianarmy/gpt2-turkish-cased'
-    batch_size = trial.suggest_int('batch_size', 1, 32)
+    batch_size = trial.suggest_int('batch_size', 1, 16)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
     num_epochs = 1
 
-    return train_vsl_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device)
+    return train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device)
 
 
 def main(data_name, num_trials, device):
