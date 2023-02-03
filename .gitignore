@@ -2,7 +2,6 @@
 .ipynb_checkpoints/
 
 # parquet and csv files
-*.parquet
 *.csv
 
 # file which end with a number

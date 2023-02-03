@@ -91,12 +91,12 @@ def concept_generator(word):
 
 if __name__ == '__main__':
     # read and prepare data for language modeling task
-    data = pd.read_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/donanim-haber-dataset/forum_dh.parquet')
+    data = pd.read_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit.parquet')
     data = prepare_data_for_modeling(data)
 
     # split data into train, validation, and test sets
     train_data, val_data, test_data = split_data(data, {'train': 0.8, 'val': 0.1, 'test': 0.1})
 
-    pd.DataFrame({'content': train_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/donanim-haber-dataset/forum_dh_train.parquet')
-    pd.DataFrame({'content': val_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/donanim-haber-dataset/forum_dh_val.parquet')
-    pd.DataFrame({'content': test_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/donanim-haber-dataset/forum_dh_test.parquet')
+    pd.DataFrame({'content': train_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_train.parquet')
+    pd.DataFrame({'content': val_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_val.parquet')
+    pd.DataFrame({'content': test_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_test.parquet')
