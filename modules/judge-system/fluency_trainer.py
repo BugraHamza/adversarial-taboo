@@ -86,8 +86,11 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     num_warmup_steps = num_training_steps // 10
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps)
 
-    train(fluency_model, train_loader, optimizer, scheduler)
-    val_ppl = evaluate(fluency_model, val_loader)
+    for _ in range(num_epochs):
+        train_ppl = train(fluency_model, train_loader, optimizer, scheduler)
+        val_ppl = evaluate(fluency_model, val_loader)
+
+        print(f'Train PPL: {train_ppl:.5f} - Val PPL: {val_ppl:.5f}')
 
     return val_ppl
 
@@ -109,6 +112,7 @@ def main(data_name, num_trials, device):
 
 
 if __name__ == '__main__':
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str, default='reddit')
     parser.add_argument('--device', type=str, default='cpu')
@@ -131,3 +135,15 @@ if __name__ == '__main__':
 
     else:
         raise ValueError('Invalid device name! (cpu, cuda, double_cuda). You are probably using a TPU.')
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_name', type=str, default='reddit')
+    parser.add_argument('--device', type=str, default='cpu')
+    parser.add_argument('--epochs', type=int, default=50)
+
+    args = parser.parse_args()
+
+    train_val_fn(args.data_name, model_name='redrussianarmy/gpt2-turkish-cased',
+                 batch_size=16, learning_rate=0.0002,
+                 num_epochs=args.epochs, device=args.device)
