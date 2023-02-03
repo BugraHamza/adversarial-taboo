@@ -1,4 +1,5 @@
 import argparse
+from functools import partial
 
 import optuna as optuna
 import pandas as pd
@@ -103,6 +104,8 @@ if __name__ == '__main__':
     parser.add_argument('--data_name', type=str, default='reddit')
     parser.add_argument('--device', type=str, default='cpu')
 
+    args = parser.parse_args()
+
     study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
                                 load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
-    study.optimize(objective, n_trials=50, gc_after_trial=True)
+    study.optimize(lambda x: objective(x, args.data_name, args.device), n_trials=50, gc_after_trial=True)
