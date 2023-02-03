@@ -86,11 +86,15 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     num_warmup_steps = num_training_steps // 10
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps)
 
+    best_val_ppl = 0
     for _ in range(num_epochs):
         train_ppl = train(fluency_model, train_loader, optimizer, scheduler)
         val_ppl = evaluate(fluency_model, val_loader)
-
         print(f'Train PPL: {train_ppl:.5f} - Val PPL: {val_ppl:.5f}')
+
+        if val_ppl > best_val_ppl:
+            fluency_model.save_pretrained('modules/judge_system/saved_fluency_models')
+            best_val_ppl = val_ppl
 
     return val_ppl
 
