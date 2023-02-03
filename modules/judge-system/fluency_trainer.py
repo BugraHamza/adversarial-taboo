@@ -33,7 +33,7 @@ def train(model, train_loader, optimizer, scheduler):
 
         losses.append(loss.item())
         pbar.set_description(f'Loss: {np.mean(losses):.5f}')
-        break
+
     return losses
 
 
