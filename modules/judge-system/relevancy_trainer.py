@@ -18,6 +18,10 @@ set_seed(42)
 transformers.utils.logging.set_verbosity_error()
 
 
+def calc_accuracy(y_pred, y, relevancy_threshold=0.4):
+    return ((y_pred > relevancy_threshold) == y).sum().item() / len(y)
+
+
 def train(model, train_loader, criterion, optimizer, scheduler, relevancy_threshold=0.4):
     model.train()
     pbar = tqdm(train_loader)
@@ -32,7 +36,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, relevancy_thresh
         scheduler.step()
 
         losses.append(loss.item())
-        accuracies.append(((y_pred > relevancy_threshold) == y).sum() / len(y))
+        accuracies.append(calc_accuracy(y_pred, y, relevancy_threshold=relevancy_threshold))
         pbar.set_description(f'Loss: {np.mean(losses):.5f} - Accuracy: {np.mean(accuracies):.5f}')
 
     return np.mean(accuracies)
@@ -49,7 +53,7 @@ def evaluate(model, val_loader, criterion, relevancy_threshold=0.4):
             loss = criterion(y_pred, y)
 
             losses.append(loss.item())
-            accuracies.append(((y_pred > relevancy_threshold) == y).sum() / len(y))
+            accuracies.append(calc_accuracy(y_pred, y, relevancy_threshold=relevancy_threshold))
             pbar.set_description(f'Loss: {np.mean(losses):.5f} - Accuracy: {np.mean(accuracies):.5f}')
 
     return np.mean(accuracies)
@@ -102,15 +106,16 @@ def objective(trial, data_name, device):
     model_name = 'dbmdz/bert-base-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 16)
     learning_rate = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
-    num_epochs = 2
+    num_epochs = 1
     threshold = 0.4
 
     return train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device, threshold)
 
 
 def main(data_name, num_trials, device):
-    study = optuna.create_study(study_name='fluency_study', storage='sqlite:///fluency_study.db', direction="minimize",
-                                load_if_exists=True, pruner=optuna.pruners.SuccessiveHalvingPruner())
+    study = optuna.create_study(study_name='relevancy_study', storage='sqlite:///relevancy_study.db',
+                                direction="maximize", load_if_exists=True,
+                                pruner=optuna.pruners.SuccessiveHalvingPruner())
     study.optimize(lambda x: objective(x, data_name, device), n_trials=num_trials, gc_after_trial=True)
 
 
