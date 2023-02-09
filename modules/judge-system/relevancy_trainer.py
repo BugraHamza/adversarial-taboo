@@ -32,7 +32,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, relevancy_thresh
         scheduler.step()
 
         losses.append(loss.item())
-        accuracies.append(torch.mean((y_pred > relevancy_threshold) == y, dtype=torch.float).item())
+        accuracies.append(((y_pred > relevancy_threshold) == y).sum() / len(y))
         pbar.set_description(f'Loss: {np.mean(losses):.5f} - Accuracy: {np.mean(accuracies):.5f}')
 
     return np.mean(accuracies)
@@ -49,7 +49,7 @@ def evaluate(model, val_loader, criterion, relevancy_threshold=0.4):
             loss = criterion(y_pred, y)
 
             losses.append(loss.item())
-            accuracies.append((y_pred > relevancy_threshold) == y)
+            accuracies.append(((y_pred > relevancy_threshold) == y).sum() / len(y))
             pbar.set_description(f'Loss: {np.mean(losses):.5f} - Accuracy: {np.mean(accuracies):.5f}')
 
     return np.mean(accuracies)
