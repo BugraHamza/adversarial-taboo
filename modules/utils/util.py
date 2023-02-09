@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-import math
+import numpy as np
 import random
 
 import pandas as pd
@@ -41,7 +41,26 @@ def prepare_data_for_modeling(data):
 
 
 def prepare_data_for_pairs(data):
-    pass
+    if 'post' in data.columns and 'response' in data.columns:
+        data = data[['post', 'response']]
+    else:
+        raise ValueError('Data must have columns "post" and "response"')
+
+    data = data.applymap(lambda x: re.sub(r'\s', ' ', x))
+    data = data.applymap(lambda x: re.sub('View Poll', '', x))
+    data = data.applymap(lambda x: x.strip())
+    data = data[(data.post != '') & (data.response != '')]
+    data['is_pair'] = True
+
+    sampled_index = None
+    while sampled_index is None or (data.index == sampled_index).sum() != 0:
+        sampled_index = data.sample(frac=1.0).index
+
+    sampled_data = data.copy()
+    sampled_data['response'] = data.loc[sampled_index, 'response'].values
+    sampled_data['is_pair'] = False
+
+    return pd.concat([data, sampled_data], ignore_index=True)
 
 
 def calc_perplexity(model, tokenizer, sentence, device='cpu'):
@@ -52,7 +71,7 @@ def calc_perplexity(model, tokenizer, sentence, device='cpu'):
     model.eval()
     with torch.no_grad():
         loss = model(sent, labels=sent).loss
-        perplexity = math.exp(loss)
+        perplexity = np.exp(loss)
         
         return perplexity
 
@@ -68,8 +87,8 @@ def get_gpt_tokenizer(path, max_len=512, more_tokens_dict={}):
     return tokenizer
 
 
-def get_bert_tokenizer(path):
-    tokenizer = BertTokenizer.from_pretrained(path)
+def get_bert_tokenizer(path, max_len=512):
+    tokenizer = BertTokenizer.from_pretrained(path, model_max_length=max_len)
     return tokenizer
 
 
@@ -86,17 +105,50 @@ def concept_generator(word):
             if word not in one_hop_word:
                 one_hop_list.add(one_hop_word)
 
-    yield random.choice(list(one_hop_list))
+    yield np.random.choice(list(one_hop_list))
+
+
+def get_data(data_name, task_name):
+    if data_name == 'reddit':
+        if task_name == 'lm':
+            train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
+            val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
+            test_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_test.parquet')
+        elif task_name == 'cls':
+            train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit-pairs_train.parquet')
+            val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit-pairs_val.parquet')
+            test_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit-pairs_test.parquet')
+        else:
+            raise ValueError('Invalid task name')
+    elif data_name == 'forum_dh':
+        if task_name == 'lm':
+            train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
+            val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_val.parquet')
+            test_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_test.parquet')
+        elif task_name == 'cls':
+            train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh-pairs_train.parquet')
+            val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh-pairs_val.parquet')
+            test_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh-pairs_test.parquet')
+        else:
+            raise ValueError('Invalid task name')
+    else:
+        raise ValueError('Invalid data name')
+
+    return train_data, val_data, test_data
 
 
 if __name__ == '__main__':
     # read and prepare data for language modeling task
-    data = pd.read_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit.parquet')
-    data = prepare_data_for_modeling(data)
+    data = pd.read_parquet('datasets/reddit-dataset/tr-reddit.parquet')
+    data = prepare_data_for_pairs(data)
 
     # split data into train, validation, and test sets
     train_data, val_data, test_data = split_data(data, {'train': 0.8, 'val': 0.1, 'test': 0.1})
 
-    pd.DataFrame({'content': train_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_train.parquet')
-    pd.DataFrame({'content': val_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_val.parquet')
-    pd.DataFrame({'content': test_data}).to_parquet('/Users/quimba/Desktop/adversarial-taboo/datasets/reddit-dataset/tr-reddit_test.parquet')
+    # pd.DataFrame({'content': train_data}).to_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
+    # pd.DataFrame({'content': val_data}).to_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
+    # pd.DataFrame({'content': test_data}).to_parquet('datasets/reddit-dataset/tr-reddit_test.parquet')
+
+    train_data.to_parquet('datasets/reddit-dataset/tr-reddit-pairs_train.parquet')
+    val_data.to_parquet('datasets/reddit-dataset/tr-reddit-pairs_val.parquet')
+    test_data.to_parquet('datasets/reddit-dataset/tr-reddit-pairs_test.parquet')

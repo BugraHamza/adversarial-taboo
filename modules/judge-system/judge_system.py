@@ -1,18 +1,19 @@
 import torch
-from modules.utils import *
+from modules.utils.util import get_gpt_tokenizer, get_bert_tokenizer, calc_perplexity
+from transformers import GPT2LMHeadModel
 
 
 class JudgeSystem:
     def __init__(self, fluency_path, relevancy_path, fluency_threshold=35e3, relevancy_threshold=0.4):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        self.fluency_model = torch.load(fluency_path, map_location=self.device)
-        self.fluency_tokenizer = get_gpt_tokenizer(self.fluency_model.config.name_or_path)
+        self.fluency_model = GPT2LMHeadModel.from_pretrained(fluency_path).to(self.device)
+        self.fluency_tokenizer = get_gpt_tokenizer('redrussianarmy/gpt2-turkish-cased')
         self.fluency_threshold = fluency_threshold
 
-        self.relevancy_model = torch.load(relevancy_path, map_location=self.device)
-        self.relevancy_tokenizer = get_bert_tokenizer(self.relevancy_model.berturk.config.name_or_path)
-        self.relevancy_threshold = relevancy_threshold
+        # self.relevancy_model = torch.load(relevancy_path, map_location=self.device)
+        # self.relevancy_tokenizer = get_bert_tokenizer(self.relevancy_model.berturk.config.name_or_path)
+        # self.relevancy_threshold = relevancy_threshold
 
     def check_perplexity(self, post, response):
         sep_token = self.fluency_tokenizer.special_tokens_map['sep_token']
@@ -20,7 +21,7 @@ class JudgeSystem:
         perplexity = calc_perplexity(self.fluency_model, self.fluency_tokenizer, sentence)
 
         # LOGGING
-        # print(f'[LOG]: Perplexity: {perplexity}')
+        print(f'[LOG]: Perplexity: {perplexity}')
 
         return perplexity < self.fluency_threshold
 
@@ -43,7 +44,7 @@ class JudgeSystem:
 
 
 if __name__ == '__main__':
-    judge = JudgeSystem(r'../../saved-models/fluency_model_3.1080100260537895', 'adequacy_model_0.5374999642372131')
+    judge = JudgeSystem(r'best_fluency_model', 'adequacy_model_0.5374999642372131')
 
     sent1 = "Bu ben yalan haahsjasdksdahkjas ayrımcılık para ışık neden leyla. ç  ğiü hatıra tokat jandarma "
     ans1 = "Soruyor sen"

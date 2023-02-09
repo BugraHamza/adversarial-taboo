@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 
 
@@ -10,6 +11,8 @@ def tokenize(text, tokenizer):
 
 class FluencyDataset(Dataset):
     def __init__(self, data, tokenizer, device='cpu'):
+        super().__init__()
+
         self.data = data
         self.tokenizer = tokenizer
         self.device = device
@@ -24,20 +27,22 @@ class FluencyDataset(Dataset):
         return len(self.data)
 
 
-class AdequacyDataset(Dataset):
+class RelevancyDataset(Dataset):
     def __init__(self, data, tokenizer, device='cpu'):
+        super().__init__()
+
         self.data = data
         self.tokenizer = tokenizer
         self.device = device
 
     def __getitem__(self, i):
         row = self.data.iloc[i]
-        post, resp = row['post'], row['response']
+        post, resp, y = row['post'], row['response'], row['is_pair']
 
-        el_sent = row.post + self.tokenizer.sep_token + row.response
-        tokenized_el = tokenize(el_sent, self.tokenizer)
+        tokenized_pair = self.tokenizer(post, resp, padding='max_length', truncation='longest_first', return_tensors='pt')
+        tokenized_pair = {k: v.squeeze().to(self.device) for k, v in tokenized_pair.items()}
 
-        return {k: v.squeeze().to(self.device) for k, v in tokenized_el.items()}
+        return tokenized_pair, torch.tensor(y, dtype=torch.float).to(self.device)
 
     def __len__(self):
         return len(self.data)

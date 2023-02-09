@@ -1,5 +1,4 @@
 import argparse
-from multiprocessing import Process
 
 import optuna as optuna
 import pandas as pd
@@ -54,16 +53,7 @@ def evaluate(model, val_loader):
 
 def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu'):
     # load data
-    if data_name == 'reddit':
-        train_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_train.parquet')
-        val_data = pd.read_parquet('datasets/reddit-dataset/tr-reddit_val.parquet')
-        # test_data = pd.read_parquet('datasets/reddit-dataset/te-reddit.parquet')
-    elif data_name == 'forum_dh':
-        train_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_train.parquet')
-        val_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_val.parquet')
-        # test_data = pd.read_parquet('datasets/donanim-haber-dataset/forum_dh_test.parquet')
-    else:
-        raise ValueError('Invalid data name!')
+    train_data, val_data, test_data = get_data(data_name, 'lm')
 
     # create a tokenizer
     tokenizer = get_gpt_tokenizer(model_name, max_len=256)
@@ -117,6 +107,8 @@ def main(data_name, num_trials, device):
 
 if __name__ == '__main__':
     """
+    from multiprocessing import Process
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str, default='reddit')
     parser.add_argument('--device', type=str, default='cpu')

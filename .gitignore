@@ -11,3 +11,7 @@
 
 # database files
 *.db
+
+# model files
+*.bin
+*.json
