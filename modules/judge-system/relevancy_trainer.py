@@ -94,9 +94,9 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
         val_acc = evaluate(relevancy_model, val_loader, criterion, relevancy_threshold=threshold)
         print(f'Train Accuracy: {train_acc:.5f} - Val Accuracy: {val_acc:.5f}')
 
-        if val_acc > best_val_acc:
-            relevancy_model.save_pretrained('modules/judge_system/saved_relevancy_models')
-            best_val_acc = val_acc
+        # if val_acc > best_val_acc:
+        #     relevancy_model.save_pretrained('modules/judge_system/saved_relevancy_models')
+        #     best_val_acc = val_acc
 
     return val_acc
 
