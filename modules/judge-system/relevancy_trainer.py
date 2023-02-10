@@ -126,11 +126,21 @@ if __name__ == '__main__':
     parser.add_argument('--data_name', type=str, default='reddit')
     parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--num_trials', type=int, default=50)
+    parser.add_argument('--num-processes', type=int, default=1)
 
     args = parser.parse_args()
 
-    if args.device == 'cpu' or args.device == 'cuda':
-        main(args.data_name, args.num_trials, args.device)
+    if args.device == 'cpu' or args.device == 'cuda' or args.device == 'mps':
+        # create a process pool and assign main function to each process
+        processes = [Process(target=main, args=(args.data_name, args.num_trials, args.device)) for _ in range(args.num_processes)]
+
+        # start processes
+        for p in processes:
+            p.start()
+
+        # wait for processes to finish
+        for p in processes:
+            p.join()
 
     elif args.device == 'double_cuda':
         p1 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:0'))
