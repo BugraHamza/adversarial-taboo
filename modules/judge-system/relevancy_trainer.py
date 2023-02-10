@@ -29,7 +29,7 @@ def train(model, train_loader, criterion, optimizer, scheduler, relevancy_thresh
 
     for batch, y in pbar:
         optimizer.zero_grad()
-        y_pred = model(**batch).squeeze()
+        y_pred = model(**batch).reshape(len(y))
         loss = criterion(y_pred, y)
         loss.backward()
         optimizer.step()
@@ -49,7 +49,7 @@ def evaluate(model, val_loader, criterion, relevancy_threshold=0.4):
 
     with torch.no_grad():
         for batch, y in pbar:
-            y_pred = model(**batch).squeeze()
+            y_pred = model(**batch).reshape(len(y))
             loss = criterion(y_pred, y)
 
             losses.append(loss.item())
@@ -104,8 +104,8 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
 def objective(trial, data_name, device):
     data_name = data_name
     model_name = 'dbmdz/bert-base-turkish-cased'
-    batch_size = trial.suggest_int('batch_size', 2, 16)
-    learning_rate = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
+    batch_size = trial.suggest_int('batch_size', 1, 32)
+    learning_rate = trial.suggest_float('learning_rate', 1e-7, 1e-2, log=True)
     num_epochs = 1
     threshold = 0.4
 
