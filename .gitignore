@@ -9,9 +9,6 @@
 # file which end with a number
 *.[0-9]*
 
-# database files
-*.db
-
 # model files
 *.bin
 *.json

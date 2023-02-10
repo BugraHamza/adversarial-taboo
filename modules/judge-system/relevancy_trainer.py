@@ -104,7 +104,7 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
 def objective(trial, data_name, device):
     data_name = data_name
     model_name = 'dbmdz/bert-base-turkish-cased'
-    batch_size = trial.suggest_int('batch_size', 1, 16)
+    batch_size = trial.suggest_int('batch_size', 2, 16)
     learning_rate = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
     num_epochs = 1
     threshold = 0.4
