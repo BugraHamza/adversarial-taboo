@@ -98,7 +98,7 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
         #     relevancy_model.save_pretrained('modules/judge_system/saved_relevancy_models')
         #     best_val_acc = val_acc
 
-    return val_acc
+    return relevancy_model
 
 
 def objective(trial, data_name, device):
@@ -120,6 +120,7 @@ def main(data_name, num_trials, device):
 
 
 if __name__ == '__main__':
+    """
     from multiprocessing import Process
 
     parser = argparse.ArgumentParser()
@@ -154,3 +155,19 @@ if __name__ == '__main__':
 
     else:
         raise ValueError('Invalid device name! (cpu, cuda, double_cuda). You are probably using a TPU.')
+    """
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--data_name', type=str, default='reddit')
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--learning_rate', type=float, default=1e-5)
+    parser.add_argument('--num_epochs', type=int, default=1)
+    parser.add_argument('--device', type=str, default='cpu')
+
+    args = parser.parse_args()
+
+    model = train_val_fn(args.data_name, 'dbmdz/bert-base-turkish-cased', args.batch_size, args.learning_rate,
+                         args.num_epochs, device=args.device, threshold=0.4)
+
+    torch.save(model, 'relevancy_model.pt')
