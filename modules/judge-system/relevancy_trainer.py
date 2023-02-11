@@ -147,11 +147,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.device == 'cpu' or args.device == 'cuda' or args.device == 'mps':
-        main(args.data_name, args.num_trials, args.device)
+        main(args.study_name, args.data_name, args.num_trials, args.device)
 
     elif args.device == 'double_cuda':
-        p1 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:0'))
-        p2 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:1'))
+        p1 = Process(target=main, args=(args.study_name, args.data_name, args.num_trials, 'cuda:0'))
+        p2 = Process(target=main, args=(args.study_name, args.data_name, args.num_trials, 'cuda:1'))
 
         p1.start()
         p2.start()
