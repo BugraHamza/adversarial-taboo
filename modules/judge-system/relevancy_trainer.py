@@ -17,6 +17,8 @@ from modules.utils.custom_models import get_relevancy_model
 set_seed(42)
 transformers.utils.logging.set_verbosity_error()
 
+best_acc = 0
+
 
 def calc_accuracy(y_pred, y, relevancy_threshold=0.4):
     return ((y_pred > relevancy_threshold) == y).sum().item() / len(y)
@@ -95,21 +97,33 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
         print(f'Train Accuracy: {train_acc:.5f} - Val Accuracy: {val_acc:.5f}')
 
         # if val_acc > best_val_acc:
-        #     relevancy_model.save_pretrained('modules/judge_system/saved_relevancy_models')
+        #     torch.save(relevancy_model, f'modules/judge-system/best_fluency_model/relevancy_{batch_size}_{learning_rate}_{num_epochs}_{threshold}_{int(1000*val_acc)}.pt')
         #     best_val_acc = val_acc
 
-    return relevancy_model
+    return relevancy_model, val_acc
 
 
 def objective(trial, data_name, device):
+    global best_acc
+
     data_name = data_name
     model_name = 'dbmdz/bert-base-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
     learning_rate = trial.suggest_float('learning_rate', 1e-7, 1e-2, log=True)
-    num_epochs = 1
-    threshold = 0.4
+    num_epochs = trial.suggest_int('num_epochs', 1, 5)
+    threshold = trial.suggest_float('threshold', 0.1, 0.9)
 
-    return train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device, threshold)
+    model, acc = train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device, threshold)
+
+    if acc > best_acc:
+        torch.save(model, f'best_model.pt')
+        print('='*50)
+        print('CURRENT BEST MODEL SAVED!')
+        print('='*50)
+        print(f'Batch Size: {batch_size} - Learning Rate: {learning_rate} - Num Epochs: {num_epochs} - Threshold: {threshold} - Accuracy: {acc:.5f}')
+        best_acc = acc
+
+    return acc
 
 
 def main(data_name, num_trials, device):
@@ -120,7 +134,7 @@ def main(data_name, num_trials, device):
 
 
 if __name__ == '__main__':
-    """
+
     from multiprocessing import Process
 
     parser = argparse.ArgumentParser()
@@ -132,16 +146,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.device == 'cpu' or args.device == 'cuda' or args.device == 'mps':
-        # create a process pool and assign main function to each process
-        processes = [Process(target=main, args=(args.data_name, args.num_trials, args.device)) for _ in range(args.num_processes)]
-
-        # start processes
-        for p in processes:
-            p.start()
-
-        # wait for processes to finish
-        for p in processes:
-            p.join()
+        main(args.data_name, args.num_trials, args.device)
 
     elif args.device == 'double_cuda':
         p1 = Process(target=main, args=(args.data_name, args.num_trials, 'cuda:0'))
@@ -171,3 +176,4 @@ if __name__ == '__main__':
                          args.num_epochs, device=args.device, threshold=0.4)
 
     torch.save(model, 'relevancy_model.pt')
+    """
