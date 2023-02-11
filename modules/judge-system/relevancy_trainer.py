@@ -126,8 +126,8 @@ def objective(trial, data_name, device):
     return acc
 
 
-def main(data_name, num_trials, device):
-    study = optuna.create_study(study_name='relevancy_study', storage='sqlite:///relevancy_study.db',
+def main(study_name, data_name, num_trials, device):
+    study = optuna.create_study(study_name=study_name, storage=f'sqlite:///{study_name}.db',
                                 direction="maximize", load_if_exists=True,
                                 pruner=optuna.pruners.SuccessiveHalvingPruner())
     study.optimize(lambda x: objective(x, data_name, device), n_trials=num_trials, gc_after_trial=True)
@@ -139,6 +139,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str, default='reddit')
+    parser.add_argument('--study_name', type=str, default='relevancy_study')
     parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--num_trials', type=int, default=50)
     parser.add_argument('--num-processes', type=int, default=1)
@@ -160,6 +161,7 @@ if __name__ == '__main__':
 
     else:
         raise ValueError('Invalid device name! (cpu, cuda, double_cuda). You are probably using a TPU.')
+
     """
 
     parser = argparse.ArgumentParser()
@@ -172,8 +174,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    model = train_val_fn(args.data_name, 'dbmdz/bert-base-turkish-cased', args.batch_size, args.learning_rate,
-                         args.num_epochs, device=args.device, threshold=0.4)
+    model, _ = train_val_fn(args.data_name, 'dbmdz/bert-base-turkish-cased', args.batch_size, args.learning_rate,
+                            args.num_epochs, device=args.device, threshold=0.4)
 
     torch.save(model, 'relevancy_model.pt')
     """
