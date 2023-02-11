@@ -110,7 +110,7 @@ def objective(trial, data_name, device):
     model_name = 'dbmdz/bert-base-turkish-cased'
     batch_size = trial.suggest_int('batch_size', 1, 32)
     learning_rate = trial.suggest_float('learning_rate', 1e-7, 1e-2, log=True)
-    num_epochs = trial.suggest_int('num_epochs', 1, 5)
+    num_epochs = 1  # trial.suggest_int('num_epochs', 1, 5)
     threshold = trial.suggest_float('threshold', 0.1, 0.9)
 
     model, acc = train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device, threshold)
