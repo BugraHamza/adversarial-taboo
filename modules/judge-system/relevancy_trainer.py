@@ -61,7 +61,8 @@ def evaluate(model, val_loader, criterion, relevancy_threshold=0.4):
     return np.mean(accuracies)
 
 
-def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, device='cpu', threshold=0.4):
+def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs,
+                 device='cpu', threshold=0.4, trainable_llm=False):
     # load data
     train_data, val_data, test_data = get_data(data_name, 'cls')
 
@@ -77,7 +78,7 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs, d
     # test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
     # create a model
-    relevancy_model = get_relevancy_model(model_name, device=device)
+    relevancy_model = get_relevancy_model(model_name, trainable_llm=trainable_llm, device=device)
 
     # create an optimizer
     optimizer = optim.AdamW(relevancy_model.parameters(), lr=learning_rate)
@@ -134,7 +135,7 @@ def main(study_name, data_name, num_trials, device):
 
 
 if __name__ == '__main__':
-
+    """
     from multiprocessing import Process
 
     parser = argparse.ArgumentParser()
@@ -170,12 +171,13 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--learning_rate', type=float, default=1e-5)
     parser.add_argument('--num_epochs', type=int, default=1)
+    parser.add_argument('--threshold', type=float, default=0.4)
+    parser.add_argument('--trainable_llm', type=bool, default=False)
     parser.add_argument('--device', type=str, default='cpu')
 
     args = parser.parse_args()
 
     model, _ = train_val_fn(args.data_name, 'dbmdz/bert-base-turkish-cased', args.batch_size, args.learning_rate,
-                            args.num_epochs, device=args.device, threshold=0.4)
+                            args.num_epochs, device=args.device, threshold=0.4, trainable_llm=args.trainable_llm)
 
     torch.save(model, 'relevancy_model.pt')
-    """

@@ -28,8 +28,10 @@ def get_fluency_model(model_name_or_path, tokenizer_length=None, device='cpu'):
     return model
 
 
-def get_relevancy_model(model_name_or_path, device='cpu'):
+def get_relevancy_model(model_name_or_path, trainable_llm=False, device='cpu'):
     model = ClassifyBERTurk(model_name_or_path).to(device=device)
+
     for params in model.berturk.parameters():
-        params.requires_grad = False
+        params.requires_grad = trainable_llm
+
     return model
