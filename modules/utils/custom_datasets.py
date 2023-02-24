@@ -18,7 +18,7 @@ class FluencyDataset(Dataset):
         self.device = device
 
     def __getitem__(self, i):
-        text = self.data.content[i]
+        text = self.tokenizer.bos_token + self.data.content[i] + self.tokenizer.eos_token
         tokenized_text = tokenize(text, self.tokenizer)
 
         return {k: v.squeeze().to(self.device) for k, v in tokenized_text.items()}

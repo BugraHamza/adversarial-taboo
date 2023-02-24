@@ -30,7 +30,7 @@ def get_fluency_model(model_name_or_path, tokenizer_length=None, device='cpu'):
 
 def get_relevancy_model(model_name_or_path, trainable_llm=False, device='cpu'):
     model = ClassifyBERTurk(model_name_or_path).to(device=device)
-
+    print('Trainable LLM:', trainable_llm)
     for params in model.berturk.parameters():
         params.requires_grad = trainable_llm
 

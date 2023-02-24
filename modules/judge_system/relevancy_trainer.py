@@ -98,7 +98,7 @@ def train_val_fn(data_name, model_name, batch_size, learning_rate, num_epochs,
         print(f'Train Accuracy: {train_acc:.5f} - Val Accuracy: {val_acc:.5f}')
 
         # if val_acc > best_val_acc:
-        #     torch.save(relevancy_model, f'modules/judge-system/best_fluency_model/relevancy_{batch_size}_{learning_rate}_{num_epochs}_{threshold}_{int(1000*val_acc)}.pt')
+        #     torch.save(relevancy_model, f'modules/judge_system/best_fluency_model/relevancy_{batch_size}_{learning_rate}_{num_epochs}_{threshold}_{int(1000*val_acc)}.pt')
         #     best_val_acc = val_acc
 
     return relevancy_model, val_acc

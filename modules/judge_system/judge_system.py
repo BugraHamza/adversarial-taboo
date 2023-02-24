@@ -34,7 +34,7 @@ class JudgeSystem:
 
     def __call__(self, curr_sent, prev_sent=None):
         perplexity = self.check_perplexity(curr_sent)
-        relevancy = self.check_relevancy(curr_sent, prev_sent)
+        relevancy = self.check_relevancy(curr_sent, prev_sent) if prev_sent is not None else True
 
         return perplexity and relevancy
 
