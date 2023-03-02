@@ -1,5 +1,5 @@
+import re
 import random
-import time
 from collections import defaultdict
 
 import pandas as pd
@@ -32,27 +32,29 @@ class BaseDefender:
 
     def get_relevant_paragraphs(self, sentence: str, N: int):
         top_paragraphs = self.bm25.get_top_n(sentence.split(), self.corpus, n=N)
-        return top_paragraphs
+        return map(lambda x: re.sub(r'\s', ' ', x), top_paragraphs)
 
     def get_answer_list(self, sentence: str, N: int = 5):
-        relevant_paragraphs = self.get_relevant_paragraphs(sentence=sentence, N=N)
-
         answers = []
-        for paragraph in relevant_paragraphs:
-            result = self.qa_pipeline(question=sentence, context=paragraph, max_length=512, top_k=1)
-            answers.append((result['answer'], result['score']))
+        for paragraph in self.get_relevant_paragraphs(sentence=sentence, N=N):
+            results = self.qa_pipeline(question=sentence, context=paragraph, max_length=64, top_k=50, top_p=0.95,
+                                       do_sample=True, num_return_sequences=3, temperature=0.95)
+
+            answers.extend([(result['answer'], result['score']) for result in results if result['score'] > self.score_threshold])
 
         answers.sort(key=lambda x: x[1], reverse=True)
+        print('[LOG] Answers:', answers)
         return answers
 
-    def answer_randomly(self):
-        answers = self.get_answer_list()
+    def answer_randomly(self, sentence: str, N: int = 5):
+        answers = self.get_answer_list(sentence, N)
         if answers:
             d_answer, _ = random.choice(answers)
             return d_answer
         return ''
 
     def get_traced_answers(self, sentence: str, N: int):
+        # TODO: Check the correctness of this method
         prob_answers = defaultdict(lambda: 0)
         for ans, score in self.get_answer_list(sentence=sentence, N=N):
             for word in ans.split():
@@ -69,7 +71,7 @@ class NoDefenseDefender(BaseDefender):
         super().__init__(source=source, model=model, method='no_defense')
 
     def answer(self, sentence: str, N: int = 5):
-        return self.get_answer_list(sentence=sentence, N=N)[0][0]
+        return [answer for answer, _ in self.get_answer_list(sentence=sentence, N=N)]
 
 
 class IntentionDetectionDefender(BaseDefender):

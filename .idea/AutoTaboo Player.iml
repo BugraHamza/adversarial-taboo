@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/taboo-datasets/donanim-haber-dataset" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/taboo-datasets/reddit-dataset" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/taboo-datasets/turkish-wiki-dataset" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/taboo-datasets/tquad2" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/dialogue-models/taboo_venv" />
       <excludeFolder url="file://$MODULE_DIR$/taboo_venv" />
     </content>

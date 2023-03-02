@@ -12,7 +12,7 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        final String inFile = "/Users/bugrahamzagundog/Desktop/AutoTaboo Player/datasets/Turkish-Wiki-Dataset/tr_wiki.csv";
+        final String inFile = "../taboo-datasets/turkish-wiki-dataset/tr_wiki.csv";
         final String outFile = "wiki_word_selection.txt";
 
         Counter counter = new Counter();
@@ -31,9 +31,9 @@ public class Main {
             List<String> sentences = extractor.fromParagraph(content);
             for(String sent : sentences) {
                 morphology.analyzeAndDisambiguate(sent).bestAnalysis().forEach(s -> {
-                    String lemma = s.getLemmas().get(0);
+                    String stem = s.getStem();
                     String pos = s.getPos().getStringForm();
-                    Word w = new Word(lemma, pos);
+                    Word w = new Word(stem, pos);
                     counter.addWord(w);
                 });
             }
@@ -49,10 +49,10 @@ public class Main {
             String word = key.getWord();
             String pos = key.getPosTag();
 
-            // if pos is Noun or the word contains only alphabet characters
+            // if pos is Noun and the word contains only alphabet characters
             if(pos.equals("Noun") && word.matches("[a-zA-Z]+") && word.length() > 2 && identifier.identify(word).equals("tr")) {
-                writer.write(word + " " + count + "\n");
-               System.out.println(word + " " + count);
+                writer.write(word + "\n");
+               System.out.println(word + " " + pos + " " + count);
             }
         }
 

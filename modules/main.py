@@ -36,7 +36,7 @@ class Assigner:
 
 class Game:
     def __init__(self, judge_system: JudgeSystem, attacker: Attacker, defender: Defender,
-                 n_rounds: int=5, n_turns: int=10, vocab_file=None, word=None):
+                 n_rounds: int = 5, n_turns: int = 10, vocab_file=None, word=None):
         if judge_system is None or attacker is None or defender is None:
             raise ValueError("Agents must be initialized..")
 
@@ -57,16 +57,18 @@ class Game:
         # get a question from the attacker
         while True:  # TODO: try for n times
             attacker_question = self.attacker.ask(word=word)
-            print('[DEBUG] Attacker question: ', attacker_question)
+            # print('[DEBUG] Attacker question: ', attacker_question)
             if self.judge_system(curr_sent=attacker_question):
                 return attacker_question
 
     def defender_turn(self, question):
         # get an answer from the defender
-        while True:  # TODO: try for n times
-            defender_answer = self.defender.answer(question)
-            if self.judge_system(curr_sent=defender_answer, prev_sent=question):
-                return defender_answer
+        for answer in set(self.defender.answer(question)):
+            # print('[DEBUG] Defender answer: ', answer)
+            if self.judge_system(curr_sent=answer, prev_sent=question):
+                return answer
+        else:
+            return ''  # no answer found, the judge system will force the defender to answer again
 
     def play_round(self):
         word = self.assigner().lower()
@@ -128,12 +130,12 @@ class Game:
 if __name__ == '__main__':
     judge = JudgeSystem(fluency_path='modules/judge_system/best_fluency_model',
                         relevancy_path='modules/judge_system/best_relevancy_model/best_model.pt',
-                        fluency_threshold=75, relevancy_threshold=0.4) # try 0.3752115408021162
+                        fluency_threshold=125, relevancy_threshold=0.4)  # try 0.3752115408021162
 
-    model_path = 'modules/openqa/attacker/attacker_model'
+    model_path = 'modules/openqa/attacker/mt5-small-3task-prepend-tquad2'
     config = AutoConfig.from_pretrained(model_path)
     QuestionGenerationModel = MT5ForConditionalGeneration.from_pretrained(model_path, config=config)
-    QuestionGenerationTokenizer = MT5TokenizerFast.from_pretrained(model_path, config=config)
+    QuestionGenerationTokenizer = MT5TokenizerFast.from_pretrained('google/mt5-small', config=config)
 
     attacker = Attacker(source='taboo-datasets/turkish-wiki-dataset/tr_wiki.parquet', method='direct_inquiry',
                         question_generation_model=QuestionGenerationModel,
@@ -141,7 +143,7 @@ if __name__ == '__main__':
 
     # ['no_defense', 'intention_detection', 'inducement_prevention', 'user']
     defender = Defender(source='taboo-datasets/turkish-wiki-dataset/tr_wiki.parquet',
-                        model='savasy/bert-base-turkish-squad',
+                        model='husnu/bert-base-turkish-128k-cased-finetuned_lr-2e-05_epochs-3TQUAD2-finetuned_lr-2e-05_epochs-3',
                         method='no_defense')
 
     game = Game(vocab_file='word-selection/selected_words.txt',
