@@ -2,6 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/modules/openqa-based/open-attacker/finetune-notebooks/turkish-nlp-qa-dataset" vcs="Git" />
   </component>
 </project>

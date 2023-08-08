@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
 import random
+import numpy as np
+import torch
 
-from transformers import AutoConfig, MT5ForConditionalGeneration, MT5TokenizerFast
+from transformers import AutoConfig, MT5ForConditionalGeneration, AutoTokenizer, EncoderDecoderModel
 
 from judge_system.judge_system import JudgeSystem
 from openqa.attacker.attacker import Attacker
@@ -10,8 +13,9 @@ from openqa.defender.defender import Defender
 
 from datetime import datetime
 
-from warnings import filterwarnings
-# filterwarnings('ignore')
+random.seed(42)
+np.random.seed(42)
+torch.manual_seed(42)
 
 
 class Assigner:
@@ -62,16 +66,19 @@ class Game:
                 return attacker_question
 
     def defender_turn(self, question):
+        most_related_answer = None
         # get an answer from the defender
-        for answer in set(self.defender.answer(question)):
+        for answer in self.defender.answer(question, N=15):
+            if most_related_answer is None:
+                most_related_answer = answer
             # print('[DEBUG] Defender answer: ', answer)
             if self.judge_system(curr_sent=answer, prev_sent=question):
                 return answer
-        else:
-            return ''  # no answer found, the judge system will force the defender to answer again
+
+        return ''  # no answer found, the judge system will force the defender to answer again
 
     def play_round(self):
-        word = self.assigner().lower()
+        word = f' {self.assigner().lower()} '
         print(f"Assigned word: {word}")
 
         # play game for n_turns or until check_if_end() returns True
@@ -85,7 +92,7 @@ class Game:
             print(f'[{datetime.now()}] Defender: {answer}')
 
             # check if the game is over
-            if word in answer:
+            if word in answer.lower():
                 return 'attacker'
 
         else:
@@ -93,7 +100,7 @@ class Game:
             # give the defender a last chance to guess the word
             # self.defender_turn()
             prediction = self.defender_turn(question)
-            if word in prediction:
+            if word in prediction.lower():
                 return 'defender'
             else:
                 return 'draw'
@@ -128,25 +135,30 @@ class Game:
 
 
 if __name__ == '__main__':
-    judge = JudgeSystem(fluency_path='modules/judge_system/best_fluency_model',
-                        relevancy_path='modules/judge_system/best_relevancy_model/best_model.pt',
-                        fluency_threshold=125, relevancy_threshold=0.4)  # try 0.3752115408021162
-
-    model_path = 'modules/openqa/attacker/mt5-small-3task-prepend-tquad2'
+    judge = JudgeSystem(fluency_path='modules/saved_models/best_fluency_model',
+                        relevancy_path='modules/saved_models/best_relevancy_model/best_model.pt',
+                        fluency_threshold=250, relevancy_threshold=0.4)  # try 0.3752115408021162
+    print(f'Judge system initialized with fluency threshold: {judge.fluency_threshold} and relevancy threshold: {judge.relevancy_threshold}')
+    model_path = 'obss/mt5-small-3task-both-tquad2'
     config = AutoConfig.from_pretrained(model_path)
-    QuestionGenerationModel = MT5ForConditionalGeneration.from_pretrained(model_path, config=config)
-    QuestionGenerationTokenizer = MT5TokenizerFast.from_pretrained('google/mt5-small', config=config)
+    attacker_model = MT5ForConditionalGeneration.from_pretrained(model_path, config=config)
+    attacker_tokenizer = AutoTokenizer.from_pretrained(model_path, config=config, max_length=256)
+
+    # model_path = 'modules/saved_models/attacker-models/bert-gpt2'
+    # attacker_model = EncoderDecoderModel.from_pretrained(model_path)
+    # encoder_tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path, 'encoder'), max_length=256)
+    # decoder_tokenizer = AutoTokenizer.from_pretrained(os.path.join(model_path, 'decoder'),  max_length=256)
 
     attacker = Attacker(source='taboo-datasets/turkish-wiki-dataset/tr_wiki.parquet', method='direct_inquiry',
-                        question_generation_model=QuestionGenerationModel,
-                        question_generation_tokenizer=QuestionGenerationTokenizer)
+                        question_generation_model=attacker_model,
+                        encoder_tokenizer=attacker_tokenizer)
 
     # ['no_defense', 'intention_detection', 'inducement_prevention', 'user']
     defender = Defender(source='taboo-datasets/turkish-wiki-dataset/tr_wiki.parquet',
-                        model='husnu/bert-base-turkish-128k-cased-finetuned_lr-2e-05_epochs-3TQUAD2-finetuned_lr-2e-05_epochs-3',
+                        model='husnu/bert-base-turkish-cased-finetuned_lr-2e-05_epochs-3',
                         method='no_defense')
 
-    game = Game(vocab_file='word-selection/selected_words.txt',
+    game = Game(vocab_file='word-selection/trial_words.txt',
                 n_rounds=30, n_turns=10,
                 judge_system=judge, attacker=attacker, defender=defender)
 

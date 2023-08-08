@@ -63,16 +63,13 @@ def prepare_data_for_pairs(data):
     return pd.concat([data, sampled_data], ignore_index=True)
 
 
+@torch.no_grad()
 def calc_perplexity(model, tokenizer, sentence, device='cpu'):
     sent = tokenizer.bos_token + sentence + tokenizer.eos_token
-    tokenized_sent = tokenizer(sent, return_tensors='pt', truncation=True, padding=True)
+    tokenized_sent = tokenizer(sent, return_tensors='pt').input_ids.to(device)
 
-    model.eval()
-    with torch.no_grad():
-        loss = model(**tokenized_sent, labels=tokenized_sent.input_ids).loss
-        perplexity = np.exp(loss)
-        
-        return perplexity
+    loss = model(tokenized_sent, labels=tokenized_sent).loss
+    return np.exp(loss)
 
 
 def get_gpt_tokenizer(path, max_len=512, more_tokens_dict={}):

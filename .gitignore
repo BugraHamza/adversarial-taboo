@@ -1,7 +1,9 @@
 # folders
 .idea/
 .ipynb_checkpoints/
-/Report/
+/reports/
+/taboo-datasets/scripts/
+/taboo-datasets/turkish-wiki-dataset/*
 
 # parquet and csv files
 *.csv
@@ -12,3 +14,4 @@
 # model files
 *.bin
 *.json
+*.pt

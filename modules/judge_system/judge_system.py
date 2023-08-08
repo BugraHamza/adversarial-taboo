@@ -16,31 +16,32 @@ class JudgeSystem:
         self.relevancy_threshold = relevancy_threshold
 
     def check_perplexity(self, sent):
-        perplexity = calc_perplexity(self.fluency_model, self.fluency_tokenizer, sent)
+        perplexity = calc_perplexity(self.fluency_model, self.fluency_tokenizer, sent).item()
 
         # LOGGING
-        print(f'[LOG]: Perplexity: {perplexity}')
+        # print(f'[LOG]: Perplexity: {perplexity}')
 
         return perplexity < self.fluency_threshold
 
     def check_relevancy(self, post, response):
-        tokenized_pair = self.relevancy_tokenizer(post, response, return_tensors='pt', truncation=True, padding=True)
+        tokenized_pair = self.relevancy_tokenizer(post, response, return_tensors='pt')
         loss = self.relevancy_model(**tokenized_pair).item()
 
         # LOGGING
-        print(f'[LOG]: Relevancy: {loss}')
+        # print(f'[LOG]: Relevancy: {loss}')
 
         return loss > self.relevancy_threshold
 
     def __call__(self, curr_sent, prev_sent=None):
-        perplexity = self.check_perplexity(curr_sent)
-        relevancy = self.check_relevancy(curr_sent, prev_sent) if prev_sent is not None else True
+        perplexity = self.check_perplexity(curr_sent) if prev_sent is None else self.check_perplexity(f'{prev_sent} {curr_sent}')
+        relevancy = self.check_relevancy(prev_sent, curr_sent) if prev_sent is not None else True
 
         return perplexity and relevancy
 
 
 if __name__ == '__main__':
-    judge = JudgeSystem(r'best_fluency_model', 'best_relevancy_model/relevancy_model.pt')
+    judge = JudgeSystem(r'../saved_models/best_fluency_model',
+                        '../saved_models/best_relevancy_model/relevancy_model.pt')
 
     sent1 = "Bu bir soru mu?"
     ans1 = "Yok, değil aslında."

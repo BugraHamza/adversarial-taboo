@@ -9,6 +9,9 @@
       <sourceFolder url="file://$MODULE_DIR$/taboo-datasets/tquad2" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/dialogue-models/taboo_venv" />
       <excludeFolder url="file://$MODULE_DIR$/taboo_venv" />
+      <excludeFolder url="file://$MODULE_DIR$/taboo-datasets/.ipynb_checkpoints" />
+      <excludeFolder url="file://$MODULE_DIR$/taboo-datasets/reddit-dataset/.ipynb_checkpoints" />
+      <excludeFolder url="file://$MODULE_DIR$/taboo-datasets/scripts/.ipynb_checkpoints" />
     </content>
     <orderEntry type="jdk" jdkName="turkish-taboo" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

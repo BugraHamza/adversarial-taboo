@@ -25,7 +25,7 @@ class BaseDefender:
         sampled_contents = self.source['content'].sample(frac=.3)
         for article in sampled_contents:
             paragraphs = article.split('\n\n')
-            paras_sample = int(len(paragraphs) * .3)
+            paras_sample = int(len(paragraphs) * 1)  # .3 for 30% sampling rate
             for paragraph in random.sample(paragraphs, paras_sample):
                 corpus.append(paragraph)
         return corpus
@@ -37,14 +37,14 @@ class BaseDefender:
     def get_answer_list(self, sentence: str, N: int = 5):
         answers = []
         for paragraph in self.get_relevant_paragraphs(sentence=sentence, N=N):
-            results = self.qa_pipeline(question=sentence, context=paragraph, max_length=64, top_k=50, top_p=0.95,
-                                       do_sample=True, num_return_sequences=3, temperature=0.95)
+            results = self.qa_pipeline(question=sentence, context=paragraph, num_return_sequences=3)
 
-            answers.extend([(result['answer'], result['score']) for result in results if result['score'] > self.score_threshold])
+            if isinstance(results, dict):
+                results = [results]
 
-        answers.sort(key=lambda x: x[1], reverse=True)
-        print('[LOG] Answers:', answers)
-        return answers
+            for result in sorted(results, key=lambda x: x['score'], reverse=True):
+                if result['score'] > self.score_threshold:
+                    yield result['answer'], result['score']
 
     def answer_randomly(self, sentence: str, N: int = 5):
         answers = self.get_answer_list(sentence, N)
@@ -71,7 +71,8 @@ class NoDefenseDefender(BaseDefender):
         super().__init__(source=source, model=model, method='no_defense')
 
     def answer(self, sentence: str, N: int = 5):
-        return [answer for answer, _ in self.get_answer_list(sentence=sentence, N=N)]
+        for answer, _ in self.get_answer_list(sentence=sentence, N=N):
+            yield answer
 
 
 class IntentionDetectionDefender(BaseDefender):
